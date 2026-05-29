@@ -94,36 +94,3 @@ def Quadratic_Weighted_Kappa(y_true, y_pred, total_score):
     quadratic_kappa = 1 - (nom / denom)
     
     return quadratic_kappa
-
-
-
-from scipy.stats import ttest_rel, wilcoxon
-import pandas as pd
-
-def statistical_significance_test(scores_adaptive, scores_fixed, method='ttest'):
-    
-    assert len(scores_adaptive) == len(scores_fixed) == 5, \
-        "Need exactly 5 fold results"
-    
-    if method == 'ttest':
-        t_stat, p_val = ttest_rel(scores_adaptive, scores_fixed)
-        
-    elif method == 'wilcoxon':
-    
-        t_stat, p_val = wilcoxon(scores_adaptive, scores_fixed)
-    
-    
-    result = {
-        'method': method,
-        't_statistic': round(t_stat, 4),
-        'p_value': round(p_val, 4),
-        'significance': sig_level,
-        'interpretation': interpretation,
-        'mean_adaptive': round(np.mean(scores_adaptive), 4),
-        'mean_fixed': round(np.mean(scores_fixed), 4),
-        'improvement': round(np.mean(scores_adaptive) - np.mean(scores_fixed), 4),
-        'std_adaptive': round(np.std(scores_adaptive), 4),
-        'std_fixed': round(np.std(scores_fixed), 4),
-    }
-    
-    return result
