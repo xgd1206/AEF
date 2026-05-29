@@ -7,15 +7,7 @@ from models.customized_modeling_pegasus import PegasusForConditionalGeneration
 
 
 class AdaptiveRMTSPegasusForConditionalGeneration(PegasusForConditionalGeneration):
-    """Adaptive RMTS Pegasus with exactly two auxiliary losses.
-
-    Training objective:
-        total_loss = generation_loss
-                   + aux_loss_weight * aux_regression_loss
-                   + load_balance_weight * load_balance_loss
-
-    The view consistency loss is intentionally removed.
-    """
+    
 
     def __init__(
         self,
