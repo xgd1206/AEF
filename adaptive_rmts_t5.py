@@ -7,15 +7,7 @@ from models.customized_modeling_t5 import CustomizedT5ForConditionalGeneration
 
 
 class AdaptiveRMTSForConditionalGeneration(CustomizedT5ForConditionalGeneration):
-    """Adaptive RMTS with exactly two auxiliary losses.
-
-    Training objective:
-        total_loss = generation_loss
-                   + aux_loss_weight * aux_regression_loss
-                   + load_balance_weight * load_balance_loss
-
-    The view consistency loss is intentionally removed.
-    """
+    
 
     def __init__(
         self,
@@ -136,7 +128,7 @@ class AdaptiveRMTSForConditionalGeneration(CustomizedT5ForConditionalGeneration)
 
         gate_feature = torch.cat([essay_pool, gpt_pool, llama_pool, prompt_embed], dim=-1)
         if self.fixed_equal_gate:
-            # 使用固定的门控权重
+           
             gate_scores = torch.tensor(
                 self.gate_weights,
                 dtype=gate_feature.dtype,
@@ -293,11 +285,7 @@ class AdaptiveRMTSForConditionalGeneration(CustomizedT5ForConditionalGeneration)
                 uniform_gate,
                 reduction="batchmean",
             )
-            # Two-auxiliary-loss version:
-            #   main loss: generation_outputs.loss
-            #   auxiliary 1: aux_loss, directly supervises fused_scores with trait labels
-            #   auxiliary 2: load_balance_loss, prevents the adaptive gate from collapsing
-            # Consistency loss is intentionally removed.
+            
             total_loss = (
                 total_loss
                 + self.aux_loss_weight * aux_loss
