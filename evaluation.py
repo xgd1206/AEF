@@ -96,22 +96,12 @@ def Quadratic_Weighted_Kappa(y_true, y_pred, total_score):
     return quadratic_kappa
 
 
-# ============ 统计显著性检验函数 ============
+
 from scipy.stats import ttest_rel, wilcoxon
 import pandas as pd
 
 def statistical_significance_test(scores_adaptive, scores_fixed, method='ttest'):
-    """
-    对自适应权重vs固定权重的5折结果进行配对检验
     
-    Args:
-        scores_adaptive: list of QWK scores from 5 folds (adaptive DEG)
-        scores_fixed: list of QWK scores from 5 folds (fixed weights)
-        method: 't-test' or 'wilcoxon'
-    
-    Returns:
-        dict with t_stat, p_value, significance_level
-    """
     assert len(scores_adaptive) == len(scores_fixed) == 5, \
         "Need exactly 5 fold results"
     
@@ -119,22 +109,9 @@ def statistical_significance_test(scores_adaptive, scores_fixed, method='ttest')
         t_stat, p_val = ttest_rel(scores_adaptive, scores_fixed)
         
     elif method == 'wilcoxon':
-        # 非参数检验（对异常值更鲁棒）
+    
         t_stat, p_val = wilcoxon(scores_adaptive, scores_fixed)
     
-    # 确定显著性水平
-    if p_val < 0.001:
-        sig_level = "***"
-        interpretation = "极显著"
-    elif p_val < 0.01:
-        sig_level = "**"
-        interpretation = "显著"
-    elif p_val < 0.05:
-        sig_level = "*"
-        interpretation = "弱显著"
-    else:
-        sig_level = "ns"
-        interpretation = "不显著"
     
     result = {
         'method': method,
@@ -150,63 +127,3 @@ def statistical_significance_test(scores_adaptive, scores_fixed, method='ttest')
     }
     
     return result
-
-
-def generate_significance_report(results_dict, output_file=None):
-    """
-    生成统计显著性报告表
-    
-    Args:
-        results_dict: {'model_name': {'adaptive': [scores], 'fixed': [scores]}, ...}
-        output_file: 保存报告的文件路径
-    """
-    report_data = []
-    
-    for model_name, scores in results_dict.items():
-        test_result = statistical_significance_test(
-            scores['adaptive'], 
-            scores['fixed']
-        )
-        
-        row = {
-            'Model': model_name,
-            'Adaptive_QWK': f"{test_result['mean_adaptive']}±{test_result['std_adaptive']}",
-            'Fixed_QWK': f"{test_result['mean_fixed']}±{test_result['std_fixed']}",
-            'Improvement': f"{test_result['improvement']}",
-            't-statistic': test_result['t_statistic'],
-            'p-value': test_result['p_value'],
-            'Significance': test_result['significance'],
-        }
-        report_data.append(row)
-    
-    report_df = pd.DataFrame(report_data)
-    
-    if output_file:
-        report_df.to_csv(output_file, index=False)
-        print(f"Report saved to {output_file}")
-    
-    return report_df
-
-
-def print_significance_summary(results_dict):
-    """
-    打印统计显著性总结到控制台
-    """
-    print("\n" + "="*80)
-    print("统计显著性检验报告 (5-Fold Cross-Validation)")
-    print("="*80)
-    
-    for model_name, scores in results_dict.items():
-        test_result = statistical_significance_test(scores['adaptive'], scores['fixed'])
-        
-        print(f"\n【{model_name}】")
-        print(f"  自适应DEG:  {test_result['mean_adaptive']} ± {test_result['std_adaptive']}")
-        print(f"  固定权重:   {test_result['mean_fixed']} ± {test_result['std_fixed']}")
-        print(f"  改进幅度:   {test_result['improvement']} ({test_result['improvement']/test_result['mean_fixed']*100:.2f}%)")
-        print(f"  t统计量:    {test_result['t_statistic']}")
-        print(f"  p值:       {test_result['p_value']}")
-        print(f"  显著性:     {test_result['significance']} ({test_result['interpretation']})")
-    
-    print("\n" + "="*80)
-    print("注: *** p<0.001, ** p<0.01, * p<0.05, ns=不显著")
-    print("="*80)
