@@ -31,7 +31,7 @@ def main(args):
     else:
         args.device = 'cpu'
     
-    # ========== 使用本地模型路径加载 tokenizer ==========
+
     model_name = args.model_name
     local_model_path = f"./models/{model_name}"
     
@@ -65,7 +65,7 @@ def main(args):
     sub_best_fold_true_dict = dict()
     
     for fold in range(args.folds):
-        # ========== 使用本地模型路径加载 model ==========
+
         if 't5' in args.model_name:
             if args.use_adaptive_rmts:
                 model = AdaptiveRMTSForConditionalGeneration.from_pretrained(
@@ -116,14 +116,14 @@ def main(args):
         dev_data = read_data(DEV_DATA_PATH)
         test_data = read_data(TEST_DATA_PATH)
         
-        # 准备评分元数据（用于标准化特征值）
+     
         prepare_score_metadata(train_data, dev_data, test_data, args)
         
         train_dataset = train_data.map(lambda x: preprocess_data(x, tokenizer,args), batched=True)
         dev_dataset = dev_data.map(lambda x: preprocess_data(x, tokenizer,args), batched=True)
         test_dataset = test_data.map(lambda x: preprocess_data(x, tokenizer,args), batched=True)
         
-        # 初始化变量，防止未定义错误
+    
         best_result = None
         best_pred_dic = None
         best_true_dic = None
@@ -135,14 +135,14 @@ def main(args):
             print(f"Model Training Fold : {fold}")
             model = train(model, tokenizer, train_dataset, dev_dataset, args)
 
-            # 检查是否有保存的checkpoint
+         
             if os.path.exists(args.save_model_fold_path):
                 checkpoint_files = [f for f in os.listdir(args.save_model_fold_path) if f.startswith("checkpoint")]
             else:
                 checkpoint_files = []
             
             if checkpoint_files:
-                # 有checkpoint，使用最好的
+            
                 for filename in checkpoint_files:
                     if filename.startswith("checkpoint-1"):
                         best_model_path = os.path.join(args.save_model_fold_path, filename)
@@ -161,7 +161,7 @@ def main(args):
                         th.cuda.empty_cache()
                         gc.collect()
                         
-                        # 找第二个最好的
+                      
                         for f in checkpoint_files:
                             if f.startswith("checkpoint-2"):
                                 sub_best_model_path = os.path.join(args.save_model_fold_path, f)
@@ -179,7 +179,7 @@ def main(args):
                                 gc.collect()
                                 break
             else:
-                # 没有checkpoint，直接用训练好的模型测试
+            
                 print("No checkpoints found, testing with current model...")
                 model = model.to(args.device)
                 if args.data == "asap":
@@ -196,7 +196,7 @@ def main(args):
 
         elif args.test:
             print(f"Model Test Fold : {fold}")
-            # 检查是否有保存的checkpoint
+        
             if os.path.exists(args.save_model_fold_path):
                 checkpoint_files = [f for f in os.listdir(args.save_model_fold_path) if f.startswith("checkpoint")]
             else:
@@ -235,7 +235,7 @@ def main(args):
                     th.cuda.empty_cache()
                     gc.collect()  
 
-        # 确保变量有值
+   
         if best_result is None:
             print("Warning: best_result is None, using dummy values")
             best_result = {}
@@ -310,18 +310,17 @@ if __name__ == "__main__":
     if args.use_adaptive_rmts and args.max_essay_length + args.max_rationale_length != 1024:
         raise ValueError("Adaptive RMTS requires max_essay_length + max_rationale_length == 1024")
     
-    # Adaptive RMTS 只使用 load_balance_weight 损失（门控均衡）
-    # 其他辅助损失已被移除以简化模型
+
     if args.use_adaptive_rmts and args.load_balance_weight == 0:
         raise ValueError(
             "load_balance_weight MUST be > 0 (at least 0.05)\n"
             "It prevents the gate from biasing completely towards one view"
         )
     
-    # 处理门控权重
+  
     if args.fixed_equal_gate:
         args.gate_weights = (args.gpt_weight, args.llama_weight)
-        # 归一化确保和为1
+      
         total = args.gpt_weight + args.llama_weight
         args.gate_weights = (args.gpt_weight / total, args.llama_weight / total)
     
